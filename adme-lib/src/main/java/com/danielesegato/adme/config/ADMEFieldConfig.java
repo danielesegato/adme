@@ -22,6 +22,7 @@ public class ADMEFieldConfig {
     private ADMEEntityConfig<?> ADMEEntityConfig;
     private ADMEIndexConstraintConfig indexConstraint;
     private ADMESerializer admeSerializer;
+    private String fallbackEnumName;
 
     public boolean isId() {
         return id;
@@ -147,5 +148,13 @@ public class ADMEFieldConfig {
 
     public void setColumnName(String columnName) {
         this.columnName = columnName;
+    }
+
+    public String getFallbackEnumName() {
+        return fallbackEnumName;
+    }
+
+    public void setFallbackEnumName(String fallbackEnumName) {
+        this.fallbackEnumName = fallbackEnumName;
     }
 }

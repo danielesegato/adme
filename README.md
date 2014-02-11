@@ -21,7 +21,6 @@ Implemented features:
 
 Currently missing features I really think should be implemented before release:
 
-  * Support for enums
   * Support for usage of custom getter/setters in entity fields
   * Support for automatic conversion from a Cursor to a class instance (wrapping a Cursor maybe)
   * Gradle AAR on maven central

@@ -40,9 +40,15 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * Keep in mind that if you do not specify a {@link #columnName()} for the foreign field the field name with the {@link #FOREIGN_FIELD_SUFFIX}
  * will be used as column name. The foreign key will be tied to the primary key of the {@link ADMEEntity } used as field type.
  * <p/>
+ * {@link java.lang.Enum} fields will be mapped with a {@link com.danielesegato.adme.db.serializer.EnumStringADMESerializer},
+ * in the database by default, this can be changed using {@link com.danielesegato.adme.ADME#registerADMESerializer(Class, com.danielesegato.adme.db.ADMESerializer)}
+ * method to register your own {@link com.danielesegato.adme.db.ADMESerializer} or to use {@link com.danielesegato.adme.db.serializer.EnumIntADMESerializer}
+ * if you prefer to store enums with integers in the database. You can define a fallback for enums when
+ * the stored value in the database doesn't match any of the enum. This is useful for handling code
+ * updates where you have to remove an Enum or cases like this but it is advised to fix this with an upgrade procedure.
+ * <p/>
  * Currently, even if defined, this annotation are not supported and will do nothing, they are here because we plan to implement them:
  * <ul>
- * <li>{@link #unknownEnumName()} )}</li>
  * <li>{@link #useGetSet()}</li>
  * </ul>
  */
@@ -146,8 +152,9 @@ public @interface ADMEField {
     boolean useGetSet() default false;
 
     /**
-     * Unsupported, will do nothing for now. In the future if the field is an Enum and the database has a value that is not one of the names in the
-     * enum then this indexName will be used instead. It must match one of the enum names. Default is false.
+     * If the field is an Enum and the database has a value that is not one of the names in the
+     * enum then this indexName will be used instead. It must match one of the enum names.
+     * Default is empty, meaning if the value extracted from the database doesn't match any of the enum an exception will be thrown.
      */
-    String unknownEnumName() default "";
+    String fallbackEnumName() default "";
 }

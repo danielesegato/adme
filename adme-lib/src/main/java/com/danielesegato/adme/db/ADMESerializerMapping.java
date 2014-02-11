@@ -45,11 +45,13 @@ public class ADMESerializerMapping {
 
         // prefer readability and %like% search on date
         TYPE_MAP.put(Date.class, JavaType.DATE_STRING);
+        // prefer performance (no %like% search)
 //        TYPE_MAP.put(Date.class, JavaType.DATE_LONG);
 
-        // prefer performance
+        // prefer performance (careful in adding an enum)
 //        TYPE_MAP.put(Enum.class, JavaType.ENUM_INTEGER);
-//        TYPE_MAP.put(Enum.class, JavaType.ENUM_STRING);
+        // prefer readability and ease up upgrades (using the name doesn't link the enum order to the DB content)
+        TYPE_MAP.put(Enum.class, JavaType.ENUM_STRING);
 
         CUSTOM_TYPE_MAP = new HashMap<Class<?>, ADMESerializer>();
     }

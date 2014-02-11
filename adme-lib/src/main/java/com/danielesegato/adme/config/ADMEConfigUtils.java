@@ -128,6 +128,23 @@ public class ADMEConfigUtils {
                 fieldConfig.setDefault(entityField.defaultValue());
             }
             fieldConfig.setUseGetSet(entityField.useGetSet());
+            if (fieldConfig.getFallbackEnumName().length() > 0) {
+                if (!field.isEnumConstant()) {
+                    throw new IllegalArgumentException(String.format(
+                            "Entity class %s declare field %s with fallback enum %s but the field is not an enum",
+                            entityClass.getName(), field.getName(), entityField.fallbackEnumName()
+                    ));
+                }
+                try {
+                    Enum.valueOf((Class<? extends Enum>)field.getType(), fieldConfig.getFallbackEnumName());
+                } catch (IllegalArgumentException notFound) {
+                    throw new IllegalArgumentException(String.format(
+                            "Entity class %s declare field %s with fallback enum %s which doesn't exist",
+                            entityClass.getName(), field.getName(), entityField.fallbackEnumName()
+                    ));
+                }
+            }
+            fieldConfig.setFallbackEnumName(entityField.fallbackEnumName());
 
             // Foreign key handling
             fieldConfig.setForeign(entityField.foreign());
