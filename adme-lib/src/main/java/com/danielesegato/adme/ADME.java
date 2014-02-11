@@ -11,6 +11,7 @@ import com.danielesegato.adme.config.ADMEFieldConfig;
 import com.danielesegato.adme.config.ADMEIndexConstraintConfig;
 import com.danielesegato.adme.config.OnForeignUpdateDelete;
 import com.danielesegato.adme.db.ADMESerializer;
+import com.danielesegato.adme.db.ADMESerializerMapping;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -360,5 +361,30 @@ public class ADME {
      */
     public static StringBuilder appendEscapedEntityOrField(final StringBuilder sb, final String entityOrField) {
         return sb.append('\'').append(entityOrField).append('\'');
+    }
+
+    /**
+     * Register a custom {@link com.danielesegato.adme.db.ADMESerializer} for a {@link java.lang.Class}.
+     * Registering a serializer makes the use of {@link com.danielesegato.adme.annotation.ADMEField} annotation
+     * on the custom class possible.
+     * <p/>
+     * You can also register a custom serializer for the data types already handled by the system, your
+     * serializer will override the default one.
+     *
+     * @param clazz      the custom class type
+     * @param serializer the custom serializer
+     */
+    public static void registerADMESerializer(final Class<?> clazz, final ADMESerializer serializer) {
+        ADMESerializerMapping.registerSerializer(clazz, serializer);
+    }
+
+    /**
+     * Unregister any custom {@link com.danielesegato.adme.db.ADMESerializer} associated to the given
+     * {@link java.lang.Class}.
+     *
+     * @param clazz the custom class type
+     */
+    public static void unregisterADMESerializer(final Class<?> clazz) {
+        ADMESerializerMapping.unregisterSerializer(clazz);
     }
 }

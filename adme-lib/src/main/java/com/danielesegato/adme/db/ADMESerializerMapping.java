@@ -28,6 +28,7 @@ import java.util.Map;
  */
 public class ADMESerializerMapping {
     private static final Map<Class<?>, JavaType> TYPE_MAP;
+    private static final Map<Class<?>, ADMESerializer> CUSTOM_TYPE_MAP;
 
     static {
         TYPE_MAP = new HashMap<Class<?>, JavaType>();
@@ -49,6 +50,8 @@ public class ADMESerializerMapping {
         // prefer performance
 //        TYPE_MAP.put(Enum.class, JavaType.ENUM_INTEGER);
 //        TYPE_MAP.put(Enum.class, JavaType.ENUM_STRING);
+
+        CUSTOM_TYPE_MAP = new HashMap<Class<?>, ADMESerializer>();
     }
 
     public static JavaType getJavaTypeForClass(Class<?> clazz, boolean convertPrimitiveToWrapperObject) {
@@ -73,13 +76,28 @@ public class ADMESerializerMapping {
     }
 
     public static ADMESerializer getADMESerializerForClass(Class<?> clazz, boolean convertPrimitiveToWrapperObject) {
-        // TODO allow registering for custom serializer?
-        ADMESerializer admeSerializer = getJavaTypeForClass(clazz, convertPrimitiveToWrapperObject).getADMESerializer();
+        ADMESerializer admeSerializer = getCustomADMESerializer(clazz);
+        if (admeSerializer != null) {
+            return admeSerializer;
+        }
+        admeSerializer = getJavaTypeForClass(clazz, convertPrimitiveToWrapperObject).getADMESerializer();
         if (admeSerializer != null) {
             return admeSerializer;
         }
         throw new IllegalArgumentException(String.format(
                 "Couldn't find a ADME serializer for class %s", clazz.getName()
         ));
+    }
+
+    private static ADMESerializer getCustomADMESerializer(Class<?> clazz) {
+        return CUSTOM_TYPE_MAP.get(clazz);
+    }
+
+    public static void registerSerializer(Class<?> clazz, ADMESerializer serializer) {
+        CUSTOM_TYPE_MAP.put(clazz, serializer);
+    }
+
+    public static void unregisterSerializer(Class<?> clazz) {
+        CUSTOM_TYPE_MAP.remove(clazz);
     }
 }
