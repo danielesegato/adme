@@ -32,7 +32,18 @@ public interface ADMESerializer {
 
     /**
      * Convert a String value to it's raw string value ready for insertion in a statement for the
-     * SQLite database
+     * SQLite database. Any escape for SQLite should be performed here to avoid SQL Injection.
+     * Strings should be wrapped with single quotes etc...
+     * <p/>
+     * This method is used to convert the default value specified in the annotation into a database
+     * CREATE TABLE statement but it may be used for other fields.
+     * <p/>
+     * Example:
+     * <pre>
+     *     CREATE TABLE `test` (
+     *         `my_column` TEXT DEFAULT {raw_string_will_be_placed_here_as_is}
+     *     )
+     * </pre>
      *
      * @param val         the string value of the content to put in the database
      * @param fieldConfig the configuration to the associated field (can be used by the serializer)

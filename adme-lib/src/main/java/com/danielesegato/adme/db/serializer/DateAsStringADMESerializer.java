@@ -11,7 +11,10 @@ import java.text.ParseException;
 import java.util.Date;
 
 /**
- * Persist a {@link java.util.Date} as an ISO8601 (UTC) string in the SQLite database.
+ * Persist a {@link java.util.Date} as an ISO8601 (UTC) string in the SQLite database. This storage
+ * data type allow usage of %like% queries on the database and is more readable then storing the timestamp.
+ *
+ * @see com.danielesegato.adme.db.serializer.DateAsTimestampADMESerializer
  */
 public class DateAsStringADMESerializer extends BaseADMESerializer {
     private static DateAsStringADMESerializer singleton = new DateAsStringADMESerializer();

@@ -9,7 +9,12 @@ import com.danielesegato.adme.config.SQLiteType;
 import java.util.Date;
 
 /**
- * Persist a {@link java.util.Date} as the timestamp (milliseconds) in the SQLite database.
+ * Persist a {@link java.util.Date} as the timestamp (milliseconds) in the SQLite database. This method
+ * doesn't allow you to query the database directly for an year / date using a %like% query but perform
+ * better then storing a String.
+ *
+ * @see com.danielesegato.adme.db.serializer.DateAsStringADMESerializer
+ * @see com.danielesegato.adme.ADME#registerADMESerializer(Class, com.danielesegato.adme.db.ADMESerializer)
  */
 public class DateAsTimestampADMESerializer extends BaseADMESerializer {
     private static DateAsTimestampADMESerializer singleton = new DateAsTimestampADMESerializer();
