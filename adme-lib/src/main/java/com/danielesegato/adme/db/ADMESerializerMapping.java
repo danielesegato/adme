@@ -1,7 +1,11 @@
 package com.danielesegato.adme.db;
 
 import com.danielesegato.adme.config.JavaType;
+import com.danielesegato.adme.db.serializer.BigDecimalADMESerializer;
+import com.danielesegato.adme.db.serializer.CurrencyADMESerializer;
 
+import java.math.BigDecimal;
+import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +32,7 @@ import java.util.Map;
  */
 public class ADMESerializerMapping {
     private static final Map<Class<?>, JavaType> TYPE_MAP;
+    private static final Map<Class<?>, ADMESerializer> DEFAULT_TYPE_MAP;
     private static final Map<Class<?>, ADMESerializer> CUSTOM_TYPE_MAP;
 
     static {
@@ -52,6 +57,10 @@ public class ADMESerializerMapping {
 //        TYPE_MAP.put(Enum.class, JavaType.ENUM_INTEGER);
         // prefer readability and ease up upgrades (using the name doesn't link the enum order to the DB content)
         TYPE_MAP.put(Enum.class, JavaType.ENUM_STRING);
+
+        DEFAULT_TYPE_MAP = new HashMap<Class<?>, ADMESerializer>();
+        DEFAULT_TYPE_MAP.put(BigDecimal.class, BigDecimalADMESerializer.getSingleton());
+        DEFAULT_TYPE_MAP.put(Currency.class, CurrencyADMESerializer.getSingleton());
 
         CUSTOM_TYPE_MAP = new HashMap<Class<?>, ADMESerializer>();
     }
@@ -82,6 +91,10 @@ public class ADMESerializerMapping {
         if (admeSerializer != null) {
             return admeSerializer;
         }
+        admeSerializer = getDefaultADMESerializer(clazz);
+        if (admeSerializer != null) {
+            return admeSerializer;
+        }
         admeSerializer = getJavaTypeForClass(clazz, convertPrimitiveToWrapperObject).getADMESerializer();
         if (admeSerializer != null) {
             return admeSerializer;
@@ -89,6 +102,10 @@ public class ADMESerializerMapping {
         throw new IllegalArgumentException(String.format(
                 "Couldn't find a ADME serializer for class %s", clazz.getName()
         ));
+    }
+
+    private static ADMESerializer getDefaultADMESerializer(Class<?> clazz) {
+        return DEFAULT_TYPE_MAP.get(clazz);
     }
 
     private static ADMESerializer getCustomADMESerializer(Class<?> clazz) {
