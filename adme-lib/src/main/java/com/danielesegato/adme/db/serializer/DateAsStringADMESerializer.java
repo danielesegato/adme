@@ -26,7 +26,7 @@ public class DateAsStringADMESerializer extends BaseADMESerializer {
     }
 
     @Override
-    public Date sqlToJava(Cursor cursor, int columnPos, ADMEFieldConfig fieldConfig) {
+    public Object sqlToJava(Cursor cursor, int columnPos, ADMEFieldConfig fieldConfig) {
         try {
             return cursor.isNull(columnPos) ? null : DateHelper.parseUTCDateTime(cursor.getString(columnPos));
         } catch (ParseException e) {

@@ -22,7 +22,7 @@ public class LongADMESerializer extends BaseADMESerializer {
     }
 
     @Override
-    public Long sqlToJava(Cursor cursor, int columnPos, ADMEFieldConfig fieldConfig) {
+    public Object sqlToJava(Cursor cursor, int columnPos, ADMEFieldConfig fieldConfig) {
         return cursor.getLong(columnPos);
     }
 

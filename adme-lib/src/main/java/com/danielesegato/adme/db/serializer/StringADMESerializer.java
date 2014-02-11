@@ -22,7 +22,7 @@ public class StringADMESerializer extends BaseADMESerializer {
     }
 
     @Override
-    public String sqlToJava(Cursor cursor, int columnPos, ADMEFieldConfig fieldConfig) {
+    public Object sqlToJava(Cursor cursor, int columnPos, ADMEFieldConfig fieldConfig) {
         return cursor.isNull(columnPos) ? null : cursor.getString(columnPos);
     }
 

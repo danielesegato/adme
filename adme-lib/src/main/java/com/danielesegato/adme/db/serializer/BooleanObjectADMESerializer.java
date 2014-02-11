@@ -23,7 +23,7 @@ public class BooleanObjectADMESerializer extends BaseADMESerializer {
     }
 
     @Override
-    public Boolean sqlToJava(Cursor cursor, int columnPos, ADMEFieldConfig fieldConfig) {
+    public Object sqlToJava(Cursor cursor, int columnPos, ADMEFieldConfig fieldConfig) {
         return cursor.isNull(columnPos) ? null : cursor.getInt(columnPos) == 1;
     }
 

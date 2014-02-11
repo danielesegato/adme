@@ -24,7 +24,7 @@ public class DateAsTimestampADMESerializer extends BaseADMESerializer {
     }
 
     @Override
-    public Date sqlToJava(Cursor cursor, int columnPos, ADMEFieldConfig fieldConfig) {
+    public Object sqlToJava(Cursor cursor, int columnPos, ADMEFieldConfig fieldConfig) {
         return cursor.isNull(columnPos) ? null : new Date(cursor.getLong(columnPos));
     }
 

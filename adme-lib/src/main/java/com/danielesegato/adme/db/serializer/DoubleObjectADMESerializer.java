@@ -22,7 +22,7 @@ public class DoubleObjectADMESerializer extends BaseADMESerializer {
     }
 
     @Override
-    public Double sqlToJava(Cursor cursor, int columnPos, ADMEFieldConfig fieldConfig) {
+    public Object sqlToJava(Cursor cursor, int columnPos, ADMEFieldConfig fieldConfig) {
         return cursor.isNull(columnPos) ? null : cursor.getDouble(columnPos);
     }
 
