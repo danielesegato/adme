@@ -12,6 +12,7 @@ import com.danielesegato.adme.config.ADMEIndexConstraintConfig;
 import com.danielesegato.adme.config.OnForeignUpdateDelete;
 import com.danielesegato.adme.db.ADMESerializer;
 import com.danielesegato.adme.db.ADMESerializerMapping;
+import com.danielesegato.adme.utils.SQLStringHelper;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -163,7 +164,7 @@ public class ADME {
         final List<String> statements = new ArrayList<String>();
         final StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE ");
-        appendEscapedEntityOrField(sb, dbEntityConfig.getEntityName());
+        SQLStringHelper.appendEscapedEntityOrField(sb, dbEntityConfig.getEntityName());
         sb.append(" (");
         appendColumnsDefinitions(sb, dbEntityConfig);
         appendEntityConstraints(sb, dbEntityConfig);
@@ -202,12 +203,12 @@ public class ADME {
         final StringBuilder sb = new StringBuilder();
         for (final String indexName : indexNameSet) {
             sb.append("DROP INDEX IF EXISTS ");
-            appendEscapedEntityOrField(sb, indexName);
+            SQLStringHelper.appendEscapedEntityOrField(sb, indexName);
             statements.add(sb.toString());
             sb.setLength(0);
         }
         sb.append("DROP TABLE IF EXISTS ");
-        appendEscapedEntityOrField(sb, tableName);
+        SQLStringHelper.appendEscapedEntityOrField(sb, tableName);
         statements.add(sb.toString());
         return statements;
     }
@@ -246,7 +247,7 @@ public class ADME {
     }
 
     private static void appendColumnDefinition(final StringBuilder sb, final ADMEFieldConfig fieldConfig) {
-        appendEscapedEntityOrField(sb, fieldConfig.getColumnName()).append(' ');
+        SQLStringHelper.appendEscapedEntityOrField(sb, fieldConfig.getColumnName()).append(' ');
 
         ADMESerializer admeSerializer = fieldConfig.getADMESerializer();
         switch (admeSerializer.getSQLiteType()) {
@@ -305,7 +306,7 @@ public class ADME {
                     } else {
                         sb.append(", ");
                     }
-                    appendEscapedEntityOrField(sb, fieldConfig.getColumnName());
+                    SQLStringHelper.appendEscapedEntityOrField(sb, fieldConfig.getColumnName());
                 }
                 sb.append(")");
             }
@@ -314,9 +315,9 @@ public class ADME {
             if (fieldConfig.isForeign()) {
                 final ADMEFieldConfig foreignFieldConfig = fieldConfig.getForeignFieldConfig();
                 sb.append(", FOREIGN KEY (");
-                appendEscapedEntityOrField(sb, fieldConfig.getColumnName());
+                SQLStringHelper.appendEscapedEntityOrField(sb, fieldConfig.getColumnName());
                 sb.append(") REFERENCES ");
-                appendEscapedEntityOrField(sb, foreignFieldConfig.getADMEEntityConfig().getEntityName());
+                SQLStringHelper.appendEscapedEntityOrField(sb, foreignFieldConfig.getADMEEntityConfig().getEntityName());
                 if (fieldConfig.getForeignOnDelete() != OnForeignUpdateDelete.NO_ACTION) {
                     sb.append("ON DELETE ").append(fieldConfig.getForeignOnDelete().sql()).append(' ');
                 }
@@ -335,9 +336,9 @@ public class ADME {
             sb.append("UNIQUE ");
         }
         sb.append("INDEX ");
-        appendEscapedEntityOrField(sb, indexConstraintConfig.getIndexName());
+        SQLStringHelper.appendEscapedEntityOrField(sb, indexConstraintConfig.getIndexName());
         sb.append(" ON ");
-        appendEscapedEntityOrField(sb, indexConstraintConfig.getADMEEntityConfig().getEntityName());
+        SQLStringHelper.appendEscapedEntityOrField(sb, indexConstraintConfig.getADMEEntityConfig().getEntityName());
         sb.append(" (");
         boolean first = true;
         for (final ADMEFieldConfig fieldConfig : indexConstraintConfig.getFields()) {
@@ -346,21 +347,10 @@ public class ADME {
             } else {
                 sb.append(", ");
             }
-            appendEscapedEntityOrField(sb, fieldConfig.getColumnName());
+            SQLStringHelper.appendEscapedEntityOrField(sb, fieldConfig.getColumnName());
         }
         sb.append(") ");
         return sb;
-    }
-
-    /**
-     * Utility method to add to the sb StringBuilder an escaped entity, field for SQLite (encapsulate it in single quote)
-     *
-     * @param sb            the StringBuilder
-     * @param entityOrField the name of the entity or field
-     * @return the quoted entity/field
-     */
-    public static StringBuilder appendEscapedEntityOrField(final StringBuilder sb, final String entityOrField) {
-        return sb.append('\'').append(entityOrField).append('\'');
     }
 
     /**
