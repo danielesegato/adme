@@ -35,10 +35,12 @@ import java.util.Map;
  * <li>Double</li>
  * <li>Boolean</li>
  * <li>Date: as ISO8601 string (UTC)</li>
- * <li>Enum: not yet supported, will be supported soon</li>
+ * <li>Enum: as String</li>
+ * <li>{@link java.math.BigDecimal}</li>
+ * <li>{@link java.util.Currency}</li>
  * </ul>
  * <p/>
- * We plan to add support to register your own serializer in the future. This feature is not just there yet.
+ * But you can register your own serializer or override the default ones.
  */
 public class ADMESerializerMapping {
     private static final Map<Class<?>, ADMESerializer> DEFAULT_TYPE_MAP;
