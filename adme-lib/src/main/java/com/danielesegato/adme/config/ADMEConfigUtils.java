@@ -128,7 +128,7 @@ public class ADMEConfigUtils {
                 fieldConfig.setDefault(entityField.defaultValue());
             }
             fieldConfig.setUseGetSet(entityField.useGetSet());
-            if (fieldConfig.getFallbackEnumName().length() > 0) {
+            if (entityField.fallbackEnumName().length() > 0) {
                 if (!field.isEnumConstant()) {
                     throw new IllegalArgumentException(String.format(
                             "Entity class %s declare field %s with fallback enum %s but the field is not an enum",
