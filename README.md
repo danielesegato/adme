@@ -16,13 +16,13 @@ Implemented features:
   * Foreign key basic support
   * Automatic generation of SQL for creating table, creating indexes, dropping tables
   * Automatic generation of ContentValues objects from class instances for database inserts / update
+  * Support for automatic conversion from a Cursor to a class instance
   * Support for storing in a column of the database your custom Datatype (custom ADMESerializer)
 
 
 Currently missing features I really think should be implemented before release:
 
   * Support for usage of custom getter/setters in entity fields
-  * Support for automatic conversion from a Cursor to a class instance (wrapping a Cursor maybe)
   * Gradle AAR on maven central
   * Implement a Demo project
   * Markdown Documentation

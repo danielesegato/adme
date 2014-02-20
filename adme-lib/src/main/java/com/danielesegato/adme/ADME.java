@@ -126,6 +126,129 @@ public class ADME {
     }
 
     /**
+     * Convert a {@link android.database.Cursor} into an Entity instance.
+     * <p/>
+     * If the class of the entityRow is not annotated with {@link com.danielesegato.adme.annotation.ADMEEntity}
+     * this method will throw a RuntimeException.
+     * <p/>
+     * Any missing column will be ignored.
+     *
+     * @param cursor  The Cursor containing the data, it will not
+     *                be cleared, it's the caller job to do so if you require it.
+     * @param clazz   The class of the instance to be created, it must have a public empty constructor
+     * @param <T>     the type of entity
+     * @return the Entity with the data extracted by the cursor
+     */
+    private static <T> T cursorToEntity(Cursor cursor, Class<T> clazz) {
+        return cursorToEntity(cursor, clazz, getAllColumnsSet(clazz, true, true));
+    }
+
+    /**
+     * Convert a {@link android.database.Cursor} into an Entity instance.
+     * <p/>
+     * If the class of the entityRow is not annotated with {@link com.danielesegato.adme.annotation.ADMEEntity}
+     * this method will throw a RuntimeException.
+     * <p/>
+     * Any missing column will be ignored.
+     *
+     * @param cursor  The Cursor containing the data, it will not
+     *                be cleared, it's the caller job to do so if you require it.
+     * @param entity  an instance of the entity, fields will be overridden)
+     * @param <T>     the type of entity
+     * @return the Entity with the data extracted by the cursor
+     */
+    public static <T> T cursorToEntity(Cursor cursor, T entity) {
+        return cursorToEntity(cursor, entity, getAllColumnsSet(entity.getClass(), true, true));
+    }
+
+    /**
+     * Convert a {@link android.database.Cursor} into an Entity instance. Only the given set of columns will be read from the cursor.
+     * <p/>
+     * If the class of the entityRow is not annotated with {@link com.danielesegato.adme.annotation.ADMEEntity}
+     * this method will throw a RuntimeException.
+     * <p/>
+     * Any missing column will be ignored.
+     *
+     * @param cursor  The Cursor containing the data, it will not
+     *                be cleared, it's the caller job to do so if you require it.
+     * @param clazz   The class of the instance to be created, it must have a public empty constructor
+     * @param columns The set of columns to extract from the Cursor, any missing column will be ignored.
+     * @param <T>     the type of entity
+     * @return the Entity with the data extracted by the cursor
+     */
+    private static <T> T cursorToEntity(Cursor cursor, Class<T> clazz, Set<String> columns) {
+        try {
+            T entity = clazz.newInstance();
+            return cursorToEntity(cursor, entity, columns);
+        } catch (InstantiationException e) {
+            throw new RuntimeException(String.format("the instance for class %s cannot be created", clazz.getName()), e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(String.format("the default constructor for class %s is not visible", clazz.getName()), e);
+        }
+    }
+
+    /**
+     * Convert a {@link android.database.Cursor} into an Entity instance. Only the given set of columns will be read from the cursor.
+     * <p/>
+     * If the class of the entityRow is not annotated with {@link com.danielesegato.adme.annotation.ADMEEntity}
+     * this method will throw a RuntimeException.
+     * <p/>
+     * Any missing column will be ignored.
+     *
+     * @param cursor  The Cursor containing the data, it will not
+     *                be cleared, it's the caller job to do so if you require it.
+     * @param entity  an instance of the entity, fields will be overridden)
+     * @param columns The set of columns to extract from the Cursor, any missing column will be ignored.
+     * @param <T>     the type of entity
+     * @return the Entity with the data extracted by the cursor
+     */
+    public static <T> T cursorToEntity(Cursor cursor, T entity, Set<String> columns) {
+        final ADMEEntityConfig<T> entityConfig = ADMEConfigUtils.lookupADMEEntityConfig((Class<T>)entity.getClass());
+        try {
+            for (final ADMEFieldConfig fieldConfig : entityConfig.getFieldsConfig()) {
+                if (!columns.contains(fieldConfig.getColumnName())) {
+                    continue;
+                }
+                final Field field;
+                Object instance;
+                if (!fieldConfig.isForeign()) {
+                    field = fieldConfig.getJavaField();
+                    instance = entity;
+                } else {
+                    field = fieldConfig.getForeignFieldConfig().getJavaField();
+                    instance = fieldConfig.getJavaField().get(entity);
+                    if (instance == null) {
+                        try {
+                            instance = fieldConfig.getJavaField().getType().newInstance();
+                        } catch (InstantiationException e) {
+                            throw new RuntimeException(String.format("the instance for class %s of foreign field %s in entity %s cannot be created",
+                                    fieldConfig.getJavaField().getType().getName(), fieldConfig.getJavaField().getName(), entityConfig.getClass().getName()), e);
+                        } catch (IllegalAccessException e) {
+                            throw new RuntimeException(String.format("the default constructor for class %s of foreign field %s in entity %s is not visible",
+                                    fieldConfig.getJavaField().getType().getName(), fieldConfig.getJavaField().getName(), entityConfig.getClass().getName()), e);
+                        }
+                        fieldConfig.getJavaField().setAccessible(true);
+                        fieldConfig.getJavaField().set(entity, instance);
+                    }
+                }
+                // TODO use set method if annotated like that?
+                final ADMESerializer admeSerializer = fieldConfig.getADMESerializer();
+                int columnIndex = cursor.getColumnIndex(fieldConfig.getColumnName());
+                if (columnIndex >= 0) {
+                    final Object fieldValue = admeSerializer.sqlToJava(cursor, columnIndex, fieldConfig);
+                    field.setAccessible(true);
+                    field.set(instance, fieldValue);
+                }
+            }
+        } catch (IllegalAccessException e) {
+            String msg = String.format("Error serializing entity %s, couldn't access some field, class: %s", entityConfig.getEntityName(), entity);
+            Log.e(TAG, msg, e);
+            throw new RuntimeException(msg, e);
+        }
+        return entity;
+    }
+
+    /**
      * Create the table for the entity of the entityClass. The entityClass must be annotated with
      * an {@link com.danielesegato.adme.annotation.ADMEEntity} annotation.
      * <p/>
