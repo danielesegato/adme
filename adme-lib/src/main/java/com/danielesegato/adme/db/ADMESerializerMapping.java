@@ -1,8 +1,18 @@
 package com.danielesegato.adme.db;
 
-import com.danielesegato.adme.config.JavaType;
 import com.danielesegato.adme.db.serializer.BigDecimalADMESerializer;
+import com.danielesegato.adme.db.serializer.BooleanADMESerializer;
+import com.danielesegato.adme.db.serializer.BooleanObjectADMESerializer;
 import com.danielesegato.adme.db.serializer.CurrencyADMESerializer;
+import com.danielesegato.adme.db.serializer.DateAsStringADMESerializer;
+import com.danielesegato.adme.db.serializer.DoubleADMESerializer;
+import com.danielesegato.adme.db.serializer.DoubleObjectADMESerializer;
+import com.danielesegato.adme.db.serializer.EnumStringADMESerializer;
+import com.danielesegato.adme.db.serializer.IntADMESerializer;
+import com.danielesegato.adme.db.serializer.IntObjectADMESerializer;
+import com.danielesegato.adme.db.serializer.LongADMESerializer;
+import com.danielesegato.adme.db.serializer.LongObjectADMESerializer;
+import com.danielesegato.adme.db.serializer.StringADMESerializer;
 
 import java.math.BigDecimal;
 import java.util.Currency;
@@ -31,62 +41,42 @@ import java.util.Map;
  * We plan to add support to register your own serializer in the future. This feature is not just there yet.
  */
 public class ADMESerializerMapping {
-    private static final Map<Class<?>, JavaType> TYPE_MAP;
     private static final Map<Class<?>, ADMESerializer> DEFAULT_TYPE_MAP;
     private static final Map<Class<?>, ADMESerializer> CUSTOM_TYPE_MAP;
 
     static {
-        TYPE_MAP = new HashMap<Class<?>, JavaType>();
-        TYPE_MAP.put(long.class, JavaType.LONG);
-        TYPE_MAP.put(int.class, JavaType.INTEGER);
-        TYPE_MAP.put(double.class, JavaType.DOUBLE);
-        TYPE_MAP.put(boolean.class, JavaType.BOOLEAN);
+        DEFAULT_TYPE_MAP = new HashMap<Class<?>, ADMESerializer>();
+        DEFAULT_TYPE_MAP.put(long.class, LongADMESerializer.getSingleton());
+        DEFAULT_TYPE_MAP.put(int.class, IntADMESerializer.getSingleton());
+        DEFAULT_TYPE_MAP.put(double.class, DoubleADMESerializer.getSingleton());
+        DEFAULT_TYPE_MAP.put(boolean.class, BooleanADMESerializer.getSingleton());
 
-        TYPE_MAP.put(String.class, JavaType.STRING);
-        TYPE_MAP.put(Long.class, JavaType.LONG_OBJ);
-        TYPE_MAP.put(Integer.class, JavaType.INTEGER_OBJ);
-        TYPE_MAP.put(Double.class, JavaType.DOUBLE_OBJ);
-        TYPE_MAP.put(Boolean.class, JavaType.BOOLEAN_OBJ);
+        DEFAULT_TYPE_MAP.put(String.class, StringADMESerializer.getSingleton());
+        DEFAULT_TYPE_MAP.put(Long.class, LongObjectADMESerializer.getSingleton());
+        DEFAULT_TYPE_MAP.put(Integer.class, IntObjectADMESerializer.getSingleton());
+        DEFAULT_TYPE_MAP.put(Double.class, DoubleObjectADMESerializer.getSingleton());
+        DEFAULT_TYPE_MAP.put(Boolean.class, BooleanObjectADMESerializer.getSingleton());
 
         // prefer readability and %like% search on date
-        TYPE_MAP.put(Date.class, JavaType.DATE_STRING);
-        // prefer performance (no %like% search)
-//        TYPE_MAP.put(Date.class, JavaType.DATE_LONG);
+        DEFAULT_TYPE_MAP.put(Date.class, DateAsStringADMESerializer.getSingleton());
+//        prefer performance (no %like% search)
+//        DEFAULT_TYPE_MAP.put(Date.class, DateAsTimestampADMESerializer.getSingleton());
 
-        // prefer performance (careful in adding an enum)
-//        TYPE_MAP.put(Enum.class, JavaType.ENUM_INTEGER);
-        // prefer readability and ease up upgrades (using the name doesn't link the enum order to the DB content)
-        TYPE_MAP.put(Enum.class, JavaType.ENUM_STRING);
+//        prefer performance (careful in adding an enum)
+//        DEFAULT_TYPE_MAP.put(Enum.class, EnumIntADMESerializer.getSingleton());
+//        prefer readability and ease up upgrades (using the name doesn't link the enum order to the DB content)
+        DEFAULT_TYPE_MAP.put(Enum.class, EnumStringADMESerializer.getSingleton());
 
-        DEFAULT_TYPE_MAP = new HashMap<Class<?>, ADMESerializer>();
         DEFAULT_TYPE_MAP.put(BigDecimal.class, BigDecimalADMESerializer.getSingleton());
         DEFAULT_TYPE_MAP.put(Currency.class, CurrencyADMESerializer.getSingleton());
 
         CUSTOM_TYPE_MAP = new HashMap<Class<?>, ADMESerializer>();
     }
 
-    public static JavaType getJavaTypeForClass(Class<?> clazz, boolean convertPrimitiveToWrapperObject) {
-        if (clazz.isPrimitive() && convertPrimitiveToWrapperObject) {
-            if (clazz == long.class) {
-                clazz = Long.class;
-            } else if (clazz == int.class) {
-                clazz = Integer.class;
-            } else if (clazz == double.class) {
-                clazz = Double.class;
-            } else if (clazz == boolean.class) {
-                clazz = Boolean.class;
-            } else {
-                throw new UnsupportedOperationException("Unsupported primitive to wrapper type conversion: " + clazz);
-            }
-        }
-        JavaType javaType = TYPE_MAP.get(clazz);
-        if (javaType != null) {
-            return javaType;
-        }
-        return JavaType.UNKNOWN;
-    }
-
     public static ADMESerializer getADMESerializerForClass(Class<?> clazz, boolean convertPrimitiveToWrapperObject) {
+        if (convertPrimitiveToWrapperObject) {
+            clazz = convertPrimitiveToWrapperObject(clazz);
+        }
         ADMESerializer admeSerializer = getCustomADMESerializer(clazz);
         if (admeSerializer != null) {
             return admeSerializer;
@@ -95,13 +85,39 @@ public class ADMESerializerMapping {
         if (admeSerializer != null) {
             return admeSerializer;
         }
-        admeSerializer = getJavaTypeForClass(clazz, convertPrimitiveToWrapperObject).getADMESerializer();
-        if (admeSerializer != null) {
-            return admeSerializer;
-        }
         throw new IllegalArgumentException(String.format(
                 "Couldn't find a ADME serializer for class %s", clazz.getName()
         ));
+    }
+
+    private static Class<?> convertPrimitiveToWrapperObject(Class<?> clazz) {
+        if (!clazz.isPrimitive()) {
+            return clazz;
+        }
+        else if (clazz == long.class) {
+            clazz = Long.class;
+        } else if (clazz == int.class) {
+            clazz = Integer.class;
+        } else if (clazz == double.class) {
+            clazz = Double.class;
+        } else if (clazz == boolean.class) {
+            clazz = Boolean.class;
+        } else {
+            throw new UnsupportedOperationException("Unsupported primitive to wrapper type conversion: " + clazz);
+        }
+        return clazz;
+    }
+
+    private static ADMESerializer getADMESerializerForClass(Class<?> clazz) {
+        ADMESerializer admeSerializer = getCustomADMESerializer(clazz);
+        if (admeSerializer != null) {
+            return admeSerializer;
+        }
+        admeSerializer = getDefaultADMESerializer(clazz);
+        if (admeSerializer != null) {
+            return admeSerializer;
+        }
+        return null;
     }
 
     private static ADMESerializer getDefaultADMESerializer(Class<?> clazz) {
