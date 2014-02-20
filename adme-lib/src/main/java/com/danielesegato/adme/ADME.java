@@ -36,7 +36,7 @@ public class ADME {
      * If the class of the entityRow is not annotated with {@link com.danielesegato.adme.annotation.ADMEEntity}
      * this method will throw a RuntimeException.
      *
-     * @param values             The ContentValues to recicle or null (one will be created), it will not
+     * @param values             The ContentValues to recycle or null (one will be created), it will not
      *                           be cleared, it's the caller job to do so if you require it.
      * @param entityRow          The instance of the entity from which you want to extract values.
      * @param includeId          <em>True</em> if you want to include the ID in the content values,
@@ -87,7 +87,7 @@ public class ADME {
      * If the class of the entityRow is not annotated with {@link com.danielesegato.adme.annotation.ADMEEntity}
      * this method will throw a RuntimeException.
      *
-     * @param values    The ContentValues to recicle or null (one will be created), it will not
+     * @param values    The ContentValues to recycle or null (one will be created), it will not
      *                  be cleared, it's the caller job to do so if you require it.
      * @param entityRow The instance of the entity from which you want to extract values.
      * @param columns   The set of columns to include in the content values.
