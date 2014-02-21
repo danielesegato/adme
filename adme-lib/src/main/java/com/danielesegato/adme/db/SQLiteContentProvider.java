@@ -1,15 +1,19 @@
 package com.danielesegato.adme.db;
 
+import android.annotation.TargetApi;
 import android.content.ContentProvider;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.OperationApplicationException;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteTransactionListener;
 import android.net.Uri;
+import android.os.Build;
+import android.os.CancellationSignal;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,7 +34,6 @@ public abstract class SQLiteContentProvider extends ContentProvider
     private final ThreadLocal<Boolean> mApplyingBatch = new ThreadLocal<Boolean>();
     private final ThreadLocal<Boolean> mNotifyChange = new ThreadLocal<Boolean>();
     private final ThreadLocal<Set<Uri>> mNotifyUris = new ThreadLocal<Set<Uri>>();
-    protected SQLiteDatabase mDb;
     private SQLiteOpenHelper mOpenHelper;
 
     /**
@@ -52,18 +55,23 @@ public abstract class SQLiteContentProvider extends ContentProvider
     /**
      * The equivalent of the {@link #insert} method, but invoked within a transaction.
      */
-    protected abstract Uri insertInTransaction(Uri uri, ContentValues values);
+    protected abstract Uri insertInTransaction(SQLiteDatabase db, Uri uri, ContentValues values);
 
     /**
      * The equivalent of the {@link #update} method, but invoked within a transaction.
      */
-    protected abstract int updateInTransaction(Uri uri, ContentValues values, String selection,
+    protected abstract int updateInTransaction(SQLiteDatabase db, Uri uri, ContentValues values, String selection,
                                                String[] selectionArgs);
 
     /**
      * The equivalent of the {@link #delete} method, but invoked within a transaction.
      */
-    protected abstract int deleteInTransaction(Uri uri, String selection, String[] selectionArgs);
+    protected abstract int deleteInTransaction(SQLiteDatabase db, Uri uri, String selection, String[] selectionArgs);
+
+    /**
+     * The equivalent of the {@link #query} method, invoked with the already initialized database.
+     */
+    protected abstract Cursor query(SQLiteDatabase db, Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder);
 
     protected abstract void notifyChange(Set<Uri> notificationUris);
 
@@ -79,22 +87,22 @@ public abstract class SQLiteContentProvider extends ContentProvider
     public Uri insert(Uri uri, ContentValues values) {
         Uri result = null;
         boolean applyingBatch = applyingBatch();
+        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         if (!applyingBatch) {
-            mDb = mOpenHelper.getWritableDatabase();
-            mDb.beginTransactionWithListener(this);
+            db.beginTransactionWithListener(this);
             try {
-                result = insertInTransaction(uri, values);
+                result = insertInTransaction(db, uri, values);
                 if (result != null) {
                     mNotifyChange.set(true);
                 }
-                mDb.setTransactionSuccessful();
+                db.setTransactionSuccessful();
             } finally {
-                mDb.endTransaction();
+                db.endTransaction();
             }
 
             onEndTransaction();
         } else {
-            result = insertInTransaction(uri, values);
+            result = insertInTransaction(db, uri, values);
             if (result != null) {
                 mNotifyChange.set(true);
             }
@@ -105,21 +113,21 @@ public abstract class SQLiteContentProvider extends ContentProvider
     @Override
     public int bulkInsert(Uri uri, ContentValues[] values) {
         int numValues = values.length;
-        mDb = mOpenHelper.getWritableDatabase();
-        mDb.beginTransactionWithListener(this);
+        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        db.beginTransactionWithListener(this);
         try {
             for (int i = 0; i < numValues; i++) {
-                Uri result = insertInTransaction(uri, values[i]);
+                Uri result = insertInTransaction(db, uri, values[i]);
                 if (result != null) {
                     mNotifyChange.set(true);
                 }
-                SQLiteDatabase savedDb = mDb;
-                mDb.yieldIfContendedSafely();
-                mDb = savedDb;
+                SQLiteDatabase savedDb = db;
+                db.yieldIfContendedSafely();
+                db = savedDb;
             }
-            mDb.setTransactionSuccessful();
+            db.setTransactionSuccessful();
         } finally {
-            mDb.endTransaction();
+            db.endTransaction();
         }
 
         onEndTransaction();
@@ -130,22 +138,22 @@ public abstract class SQLiteContentProvider extends ContentProvider
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         int count = 0;
         boolean applyingBatch = applyingBatch();
+        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         if (!applyingBatch) {
-            mDb = mOpenHelper.getWritableDatabase();
-            mDb.beginTransactionWithListener(this);
+            db.beginTransactionWithListener(this);
             try {
-                count = updateInTransaction(uri, values, selection, selectionArgs);
+                count = updateInTransaction(db, uri, values, selection, selectionArgs);
                 if (count > 0) {
                     mNotifyChange.set(true);
                 }
-                mDb.setTransactionSuccessful();
+                db.setTransactionSuccessful();
             } finally {
-                mDb.endTransaction();
+                db.endTransaction();
             }
 
             onEndTransaction();
         } else {
-            count = updateInTransaction(uri, values, selection, selectionArgs);
+            count = updateInTransaction(db, uri, values, selection, selectionArgs);
             if (count > 0) {
                 mNotifyChange.set(true);
             }
@@ -158,22 +166,22 @@ public abstract class SQLiteContentProvider extends ContentProvider
     public int delete(Uri uri, String selection, String[] selectionArgs) {
         int count = 0;
         boolean applyingBatch = applyingBatch();
+        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         if (!applyingBatch) {
-            mDb = mOpenHelper.getWritableDatabase();
-            mDb.beginTransactionWithListener(this);
+            db.beginTransactionWithListener(this);
             try {
-                count = deleteInTransaction(uri, selection, selectionArgs);
+                count = deleteInTransaction(db, uri, selection, selectionArgs);
                 if (count > 0) {
                     mNotifyChange.set(true);
                 }
-                mDb.setTransactionSuccessful();
+                db.setTransactionSuccessful();
             } finally {
-                mDb.endTransaction();
+                db.endTransaction();
             }
 
             onEndTransaction();
         } else {
-            count = deleteInTransaction(uri, selection, selectionArgs);
+            count = deleteInTransaction(db, uri, selection, selectionArgs);
             if (count > 0) {
                 mNotifyChange.set(true);
             }
@@ -186,8 +194,8 @@ public abstract class SQLiteContentProvider extends ContentProvider
             throws OperationApplicationException {
         int ypCount = 0;
         int opCount = 0;
-        mDb = mOpenHelper.getWritableDatabase();
-        mDb.beginTransactionWithListener(this);
+        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        db.beginTransactionWithListener(this);
         try {
             mApplyingBatch.set(true);
             final int numOperations = operations.size();
@@ -202,21 +210,42 @@ public abstract class SQLiteContentProvider extends ContentProvider
                 final ContentProviderOperation operation = operations.get(i);
                 if (i > 0 && operation.isYieldAllowed()) {
                     opCount = 0;
-                    if (mDb.yieldIfContendedSafely(SLEEP_AFTER_YIELD_DELAY)) {
-                        mDb = mOpenHelper.getWritableDatabase();
+                    if (db.yieldIfContendedSafely(SLEEP_AFTER_YIELD_DELAY)) {
+                        db = mOpenHelper.getWritableDatabase();
                         ypCount++;
                     }
                 }
 
                 results[i] = operation.apply(this, results, i);
             }
-            mDb.setTransactionSuccessful();
+            db.setTransactionSuccessful();
             return results;
         } finally {
             mApplyingBatch.set(false);
-            mDb.endTransaction();
+            db.endTransaction();
             onEndTransaction();
         }
+    }
+
+    @Override
+    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        return query(db, uri, projection, selection, selectionArgs, sortOrder);
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    @Override
+    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder, CancellationSignal cancellationSignal) {
+        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        return query(db, uri, projection, selection, selectionArgs, sortOrder, cancellationSignal);
+    }
+
+    /**
+     * The equivalent of the {@link #query} method (with {@link CancellationSignal} variant), invoked with the already initialized database.
+     */
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    protected Cursor query(SQLiteDatabase db, Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder, CancellationSignal cancellationSignal) {
+        return query(db, uri, projection, selection, selectionArgs, sortOrder);
     }
 
     /**
