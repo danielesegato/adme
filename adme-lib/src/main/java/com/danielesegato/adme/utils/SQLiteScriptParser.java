@@ -17,6 +17,39 @@ import java.io.Reader;
  * Parse an SQLite script line by line from an input stream. This class is not thread safe. It can be used to parse an
  * SQL script skipping comments and dividing multi-line statements into single line statements at each call of the
  * {@link #nextStatement()} method.
+ * <p/>
+ * <b>Usage:</b>
+ * <p/>
+ * Call the static {@link #runSQLScript(android.content.Context, android.database.sqlite.SQLiteDatabase, String)}
+ * method or do it manually:
+ * <pre>
+ * Reader scriptReader = null;
+ * try {
+ *   scriptReader = getScriptReader();
+ *   SQLiteScriptParser parser = new SQLiteScriptParser();
+ *   parser.setInputReader(scriptReader);
+ *   String statement;
+ *   while ((statement = parser.nextStatement()) != null) {
+ *     db.execSQL(statement);
+ *   }
+ *   scriptReader.close();
+ *   scriptReader = null;
+ * } finally {
+ *   if (scriptReader != null) {
+ *   try {
+ *     scriptReader.close();
+ *   } catch (IOException e) {
+ *     Log.e(LOG_TAG, String.format("An I/O exception is occurred while trying to close SQL script asset '%s'.", sqlScriptAsset), e);
+ *   }
+ * }
+ * </pre>
+ * <p/>
+ * <b>Limitations:</b>
+ * <p/>
+ * <ul>
+ * <li>Comments can't be placed in the same line with an SQL command</li>
+ * <li>Each SQL statement must complete with a semi-colon (;) followed by a new line</li>
+ * </ul>
  */
 public class SQLiteScriptParser {
 
@@ -49,6 +82,8 @@ public class SQLiteScriptParser {
                 }
                 db.execSQL(statement);
             }
+            scriptReader.close();
+            scriptReader = null;
         } catch (IOException e) {
             throw new SQLException(String.format("Cannot read the SQL script: %s", sqlScriptAsset));
         } finally {
