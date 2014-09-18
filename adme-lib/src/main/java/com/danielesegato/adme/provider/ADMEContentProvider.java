@@ -72,10 +72,10 @@ public abstract class ADMEContentProvider extends ContentProvider {
         return buildUri(URI_SCHEME, authority, path);
     }
 
-    SparseArray<ADMEContentProviderComponent> components;
-    int componentId = 0;
+    private SparseArray<ADMEContentProviderComponent> components;
+    private int componentId = 0;
     private UriMatcher uriMatcher;
-    private boolean componentsRegistered = false;
+    private volatile boolean componentsRegistered = false;
     private SQLiteTransactionListener transactionListener = DUMMY_TRANSACTION_LISTENER;
 
     @Override
@@ -106,7 +106,7 @@ public abstract class ADMEContentProvider extends ContentProvider {
      * @return the identifier of the component
      */
     protected int registerComponent(ADMEContentProviderComponent component) {
-        componentId++;
+        int componentId = ++this.componentId;
         component.setContext(getContext());
         component.setAuthority(getAuthority());
         final Uri componentUri = component.getUri();
@@ -123,9 +123,18 @@ public abstract class ADMEContentProvider extends ContentProvider {
      * @throws java.lang.IllegalArgumentException if the uri doesn't match any registered component
      */
     private ADMEContentProviderComponent getComponent(Uri uri) throws IllegalArgumentException {
+        // "working" double check locking with volatile field variable
+        // see http://stackoverflow.com/questions/5717090/double-checked-locking-in-android/5717977
+        // fadden comments in the accepted answer, he is a Dalvik / Art developer at Google
+        boolean componentsRegistered = this.componentsRegistered;
         if (!componentsRegistered) {
-            registerComponents();
-            componentsRegistered = true;
+            synchronized (this) {
+                componentsRegistered = this.componentsRegistered;
+                if (!componentsRegistered) {
+                    registerComponents();
+                    this.componentsRegistered = true;
+                }
+            }
         }
         int uriType = uriMatcher.match(uri);
         if (uriType == -1) {
