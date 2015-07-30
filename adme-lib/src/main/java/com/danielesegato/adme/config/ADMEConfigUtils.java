@@ -1,5 +1,7 @@
 package com.danielesegato.adme.config;
 
+import android.util.Log;
+
 import com.danielesegato.adme.annotation.ADMEEntity;
 import com.danielesegato.adme.annotation.ADMEField;
 import com.danielesegato.adme.annotation.ADMEIndexConstraint;
@@ -44,11 +46,6 @@ public class ADMEConfigUtils {
         return entity;
     }
 
-    static ADMEFieldConfig lookupADMEIDFieldConfig(Class<?> type) {
-        final ADMEEntityConfig<?> entityConfig = lookupADMEEntityConfig(type);
-        return entityConfig.getIdFieldConfig();
-    }
-
     static ADMESerializer findADMESerializerForField(final Field field, boolean convertPrimitiveToWrapperObject) {
         return ADMESerializerMapping.getADMESerializerForClass(field.getType(), convertPrimitiveToWrapperObject);
     }
@@ -81,8 +78,9 @@ public class ADMEConfigUtils {
     private static <T> void buildFieldsConfiguration(Class<T> entityClass, ADMEEntityConfig<T> entityConfig, Map<String, ADMEFieldConfig> fieldNameConfigMap, List<ADMEFieldConfig> fieldConfigList, List<ADMEIndexConstraintConfig> entityIndexConstraintList) {
         buildFieldsConfigurationRecursive(entityClass, entityClass, entityConfig, fieldNameConfigMap, fieldConfigList, entityIndexConstraintList);
         if (entityConfig.getIdFieldConfig() == null) {
-            throw new IllegalArgumentException(String.format(
-                    "Entity %s of class %s has no field marked as ID", entityConfig.getEntityName(), entityClass.getName()
+            Log.w("ADME", String.format(
+                    "Entity %s of class %s has no field marked as ID",
+                    entityConfig.getEntityName(), entityClass.getName()
             ));
         }
     }

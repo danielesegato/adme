@@ -1,5 +1,7 @@
 package com.danielesegato.adme.config;
 
+import com.danielesegato.adme.BuildConfig;
+import com.danielesegato.adme.annotation.ADMEEntity;
 import com.danielesegato.adme.db.ADMESerializer;
 
 import java.lang.reflect.Field;
@@ -91,7 +93,21 @@ public class ADMEFieldConfig {
     public ADMEFieldConfig getForeignFieldConfig() {
         // lazy initialize to avoid recursions
         if (foreign && foreignFieldConfig == null) {
-            this.foreignFieldConfig = ADMEConfigUtils.lookupADMEIDFieldConfig(getJavaField().getType());
+            Class<?> foreignFieldType = getJavaField().getType();
+            final ADMEEntityConfig<?> entityConfig;
+            try {
+                entityConfig = ADMEConfigUtils.lookupADMEEntityConfig(foreignFieldType);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalStateException(String.format(
+                        "Class %s of field '%s' marked as foreign column '%s' in entity '%s' is not an ADME entity, did you annotated it with %s?",
+                        foreignFieldType.getName(), javaField.getName(), getColumnName(), getADMEEntityConfig().getEntityName(), ADMEEntity.class.getSimpleName()), e);
+            }
+            this.foreignFieldConfig = entityConfig.getIdFieldConfig();
+            if (this.foreignFieldConfig == null) {
+                throw new IllegalStateException(String.format(
+                        "Table '%s' for class %s has no ID, can't setup as foreign key in table '%s' column '%s', field '%s'",
+                        entityConfig.getEntityName(), entityConfig.getJavaClass().getName(), getADMEEntityConfig().getEntityName(), getColumnName(), javaField.getName()));
+            }
         }
         return foreignFieldConfig;
     }
@@ -131,7 +147,11 @@ public class ADMEFieldConfig {
     public ADMESerializer getADMESerializer() {
         if (this.admeSerializer == null) {
             // lazy initialize to avoid recursions
-            assert foreign == true : "We did something wrong in configuring this field, the serializer should always be set unless this was a foreign field";
+            if (BuildConfig.DEBUG) {
+                if (!foreign) {
+                    throw new RuntimeException("We did something wrong in configuring this field, the serializer should always be set unless this was a foreign field");
+                }
+            }
             this.admeSerializer = ADMEConfigUtils.findADMESerializerForField(getForeignFieldConfig().getJavaField(), isNullable());
         }
         return admeSerializer;
