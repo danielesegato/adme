@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.util.Log;
 
+import com.danielesegato.adme.InternalADMEConsts;
 import com.danielesegato.adme.config.ADMEFieldConfig;
 import com.danielesegato.adme.config.SQLiteType;
 
@@ -21,7 +22,7 @@ import java.lang.reflect.Field;
  * @see com.danielesegato.adme.ADME#registerADMESerializer(Class, com.danielesegato.adme.db.ADMESerializer)
  */
 public class EnumStringADMESerializer extends BaseADMESerializer {
-    private static final String LOG_TAG = EnumStringADMESerializer.class.getSimpleName();
+    private static final String LOGTAG = InternalADMEConsts.LOGTAG;
     private static EnumStringADMESerializer singleton = new EnumStringADMESerializer();
 
     public static EnumStringADMESerializer getSingleton() {
@@ -91,8 +92,8 @@ public class EnumStringADMESerializer extends BaseADMESerializer {
                 throw new IllegalArgumentException(String.format("Unknown enum for name %s in field %s for entity %s, configured fallback replacement '%s' not found for enum %s",
                         enumName, field.getName(), fieldConfig.getADMEEntityConfig().getEntityName(), fieldConfig.getFallbackEnumName(), field.getType()));
             }
-            if (Log.isLoggable(LOG_TAG, Log.DEBUG)) {
-                Log.d(LOG_TAG, String.format("Unknown enum name %s in field %s for entity %s, replacing with configured fallback %d (%s)",
+            if (Log.isLoggable(LOGTAG, Log.DEBUG)) {
+                Log.d(LOGTAG, String.format("Unknown enum name %s in field %s for entity %s, replacing with configured fallback %d (%s)",
                         enumName, field.getName(), fieldConfig.getADMEEntityConfig().getEntityName(), fallbackEnum.ordinal(), fallbackEnum.name()));
             }
             return fallbackEnum;

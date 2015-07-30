@@ -2,6 +2,8 @@ package com.danielesegato.adme.config;
 
 import android.util.Log;
 
+import com.danielesegato.adme.ADME;
+import com.danielesegato.adme.InternalADMEConsts;
 import com.danielesegato.adme.annotation.ADMEEntity;
 import com.danielesegato.adme.annotation.ADMEField;
 import com.danielesegato.adme.annotation.ADMEIndexConstraint;
@@ -78,7 +80,7 @@ public class ADMEConfigUtils {
     private static <T> void buildFieldsConfiguration(Class<T> entityClass, ADMEEntityConfig<T> entityConfig, Map<String, ADMEFieldConfig> fieldNameConfigMap, List<ADMEFieldConfig> fieldConfigList, List<ADMEIndexConstraintConfig> entityIndexConstraintList) {
         buildFieldsConfigurationRecursive(entityClass, entityClass, entityConfig, fieldNameConfigMap, fieldConfigList, entityIndexConstraintList);
         if (entityConfig.getIdFieldConfig() == null) {
-            Log.w("ADME", String.format(
+            Log.w(InternalADMEConsts.LOGTAG, String.format(
                     "Entity %s of class %s has no field marked as ID",
                     entityConfig.getEntityName(), entityClass.getName()
             ));

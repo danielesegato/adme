@@ -27,7 +27,7 @@ import java.util.Set;
  */
 public class ADME {
 
-    private static final String TAG = ADME.class.getSimpleName();
+    private static final String LOGTAG = InternalADMEConsts.LOGTAG;
 
     /**
      * Convert an entity row into it's Andoird {@link ContentValues} ready to use in an insert or update
@@ -119,7 +119,7 @@ public class ADME {
             }
         } catch (IllegalAccessException e) {
             String msg = String.format("Error serializing entity %s, couldn't access some field, class: %s", entityConfig.getEntityName(), entityRow);
-            Log.e(TAG, msg, e);
+            Log.e(LOGTAG, msg, e);
             throw new RuntimeException(msg, e);
         }
         return values;
@@ -242,7 +242,7 @@ public class ADME {
             }
         } catch (IllegalAccessException e) {
             String msg = String.format("Error serializing entity %s, couldn't access some field, class: %s", entityConfig.getEntityName(), entity);
-            Log.e(TAG, msg, e);
+            Log.e(LOGTAG, msg, e);
             throw new RuntimeException(msg, e);
         }
         return entity;
@@ -269,10 +269,10 @@ public class ADME {
         ADMEEntityConfig<T> entityConfig = ADMEConfigUtils.lookupADMEEntityConfig(entityClass);
         List<String> statements = getCreateTableStatements(entityConfig);
         for (String statement : statements) {
-            Log.d(TAG, String.format("Creating table for %s, executing statement: %s", entityClass.getSimpleName(), statement));
+            Log.d(LOGTAG, String.format("Creating table for %s, executing statement: %s", entityClass.getSimpleName(), statement));
             db.execSQL(statement);
         }
-        Log.i(TAG, String.format("Table for %s created SUCCESSFULLY", entityClass.getName()));
+        Log.i(LOGTAG, String.format("Table for %s created SUCCESSFULLY", entityClass.getName()));
     }
 
     /**
@@ -310,10 +310,10 @@ public class ADME {
     public static void dropTable(final SQLiteDatabase db, final String tableName) {
         List<String> statements = getDropTableStatements(db, tableName);
         for (String statement : statements) {
-            Log.d(TAG, String.format("Dropping table for %s, executing statement: %s", tableName, statement));
+            Log.d(LOGTAG, String.format("Dropping table for %s, executing statement: %s", tableName, statement));
             db.execSQL(statement);
         }
-        Log.i(TAG, String.format("Table for %s dropped SUCCESSFULLY", tableName));
+        Log.i(LOGTAG, String.format("Table for %s dropped SUCCESSFULLY", tableName));
     }
 
     public static List<String> getDropTableStatements(final SQLiteDatabase db, final String tableName) {

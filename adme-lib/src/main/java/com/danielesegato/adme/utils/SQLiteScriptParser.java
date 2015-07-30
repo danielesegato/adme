@@ -7,6 +7,8 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.danielesegato.adme.InternalADMEConsts;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,7 +41,7 @@ import java.io.Reader;
  *   try {
  *     scriptReader.close();
  *   } catch (IOException e) {
- *     Log.e(LOG_TAG, String.format("An I/O exception is occurred while trying to close SQL script asset '%s'.", sqlScriptAsset), e);
+ *     Log.e(LOGTAG, String.format("An I/O exception is occurred while trying to close SQL script asset '%s'.", sqlScriptAsset), e);
  *   }
  * }
  * </pre>
@@ -55,7 +57,7 @@ public class SQLiteScriptParser {
 
     private static final boolean DEBUG = true;
 
-    private static final String LOG_TAG = SQLiteScriptParser.class.getSimpleName();
+    private static final String LOGTAG = InternalADMEConsts.LOGTAG + "sqlparser";
 
     private StringBuilder sb;
 
@@ -78,7 +80,7 @@ public class SQLiteScriptParser {
             String statement;
             while ((statement = parser.nextStatement()) != null) {
                 if (DEBUG) {
-                    Log.d(LOG_TAG, String.format("Executing SQL Statement: %s", statement));
+                    Log.d(LOGTAG, String.format("Executing SQL Statement: %s", statement));
                 }
                 db.execSQL(statement);
             }
@@ -91,7 +93,7 @@ public class SQLiteScriptParser {
                 try {
                     scriptReader.close();
                 } catch (IOException e) {
-                    Log.e(LOG_TAG, String.format("An I/O exception is occurred while trying to close SQL script asset '%s'.", sqlScriptAsset), e);
+                    Log.e(LOGTAG, String.format("An I/O exception is occurred while trying to close SQL script asset '%s'.", sqlScriptAsset), e);
                 }
             }
         }
@@ -144,7 +146,7 @@ public class SQLiteScriptParser {
             } else if (line.startsWith("-- ")) {
                 // skip comment
                 if (DEBUG) {
-                    Log.d(LOG_TAG, String.format("Comment: %s", line.substring(3)));
+                    Log.d(LOGTAG, String.format("Comment: %s", line.substring(3)));
                 }
             } else {
                 this.sb.append(line).append(' ');
@@ -156,7 +158,7 @@ public class SQLiteScriptParser {
         final String statement = this.sb.toString().trim();
         if (statement.length() > 0) {
             if (DEBUG) {
-                Log.d(LOG_TAG, String.format("Returning Statement: %s", statement));
+                Log.d(LOGTAG, String.format("Returning Statement: %s", statement));
             }
             return statement;
         } else {
