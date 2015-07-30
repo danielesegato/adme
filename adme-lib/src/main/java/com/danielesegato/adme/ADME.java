@@ -67,7 +67,7 @@ public class ADME {
         final ADMEEntityConfig<T> entityConfig = ADMEConfigUtils.lookupADMEEntityConfig(entityClass);
         Set<String> columns = new HashSet<String>();
         for (ADMEFieldConfig field : entityConfig.getFieldsConfig()) {
-            if (field.isGeneratedId()) {
+            if (!includeId && field.isGeneratedId()) {
                 continue;
             } else if (!includeId && field.isId()) {
                 continue;
