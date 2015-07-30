@@ -230,7 +230,7 @@ public class ADMEConfigUtils {
             ADMEFieldConfig fieldConfig = fieldNameConfigMap.get(indexConstraintEntity.columns()[i]);
             if (fieldConfig == null) {
                 throw new IllegalArgumentException(String.format(
-                        "Column '%s' not found in entity class %d for %s annotation, check a field with that column name is available",
+                        "Column '%s' not found in entity class %s for %s annotation, check a field with that column name is available",
                         indexConstraintEntity.columns()[i], entityClass.getName(), ADMEIndexConstraint.class.getSimpleName()
                 ));
             }
