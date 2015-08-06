@@ -12,6 +12,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Annotate a field of a class to be included as column of an Entity annotated with {@link ADMEEntity}.
+ * The annotation is automatically inherited by subclasses and is available at runtime.
  * <p/>
  * You can define a field {@link #columnName()}, by default the field name itself is used. If you do not specify a
  * {@link #columnName()} on fields marked as {@link #foreign()} a suffix is added to the column name:

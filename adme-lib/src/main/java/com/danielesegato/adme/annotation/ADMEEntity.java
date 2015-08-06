@@ -1,6 +1,7 @@
 package com.danielesegato.adme.annotation;
 
 import java.lang.annotation.Documented;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -8,7 +9,8 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Annotate an AndroidORM Entity.
+ * Annotate an AndroidORM Entity. The annotation is automatically inherited by subclasses and is
+ * available at runtime.
  * <p/>
  * By default the class name is used as entity name in SQLite, but you can override it with {@link #entityName()}.
  * <p/>
@@ -31,6 +33,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target(TYPE)
 @Retention(RUNTIME)
 @Documented()
+@Inherited
 public @interface ADMEEntity {
 
     /**

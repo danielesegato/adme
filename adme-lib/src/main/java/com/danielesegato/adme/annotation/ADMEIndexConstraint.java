@@ -10,7 +10,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Define an index and/or a constraint on one or more columns. Can be applied to a single field or a
- * class containing fields.
+ * class containing fields. The annotation is automatically inherited by subclasses and is available
+ * at runtime.
  * <p/>
  * At least one of {@link #index()} or {@link #unique()} should be defined.
  * <p/>
