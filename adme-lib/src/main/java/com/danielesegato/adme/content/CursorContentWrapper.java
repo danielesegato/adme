@@ -3,10 +3,18 @@ package com.danielesegato.adme.content;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.util.Log;
+
+import com.danielesegato.adme.ADME;
+import com.danielesegato.adme.InternalADMEConsts;
+
+import java.util.List;
 
 /**
- * A content wrapper for {@link Cursor}s. The {@link ContentObserver} mechanism rely on the standard
+ * A content wrapper for a {@link Cursor}. The {@link ContentObserver} mechanism rely on the standard
  * Android way of handling it.
  * <p/>
  * You are supposed to set on your Cursor a notification {@link android.net.Uri} when you build your
@@ -21,40 +29,93 @@ import android.support.annotation.NonNull;
  * That can be done by just setting up related notification uris and properly set up the notification
  * Uri on Cursors in your query methods.
  *
- * @see ADMEWrapperUtil
+ * @see CursorContentWrapper
  * @see com.danielesegato.adme.provider.ADMEContentProvider
  * @see com.danielesegato.adme.provider.ADMEContentProviderComponent
  */
-public class CursorContentWrapper<T> extends ContentWrapper<T> {
+public class CursorContentWrapper<T> extends BaseContentWrapper<T> {
+
+    /**
+     * Wraps a cursor and a content.
+     *
+     * @param cursor  the cursor
+     * @param content the content
+     * @param <X>     the content data type
+     * @return the wrapper
+     */
+    public static
+    @NonNull
+    <X> CursorContentWrapper<X> wrap(@NonNull Cursor cursor, @Nullable X content) {
+        CursorContentWrapper<X> wrapper = new CursorContentWrapper<>();
+        wrapper.changeCursor(cursor);
+        wrapper.setContent(content);
+        return wrapper;
+    }
+
+    /**
+     * Wraps a cursor and generate the content from a list of
+     * {@link com.danielesegato.adme.annotation.ADMEEntity} annotated class.
+     *
+     * @param cursor the cursor
+     * @param clazz  the content type
+     * @param <X>    the content data type
+     * @return the wrapper
+     */
+    public static
+    @NonNull
+    <X> CursorContentWrapper<X> wrap(@NonNull Cursor cursor, @NonNull Class<X> clazz) {
+        CursorContentWrapper<X> wrapper = new CursorContentWrapper<>();
+        wrapper.changeCursor(cursor);
+        wrapper.setContent(ADME.cursorToEntity(cursor, clazz));
+        return wrapper;
+    }
+
+    /**
+     * Wraps a cursor and generate the content from an
+     * {@link com.danielesegato.adme.annotation.ADMEEntity} annotated class.
+     *
+     * @param cursor the cursor
+     * @param clazz  the content type
+     * @param <X>    the content data type
+     * @return the wrapper
+     */
+    public static
+    @NonNull
+    <X> CursorContentWrapper<List<X>> wrapList(@NonNull Cursor cursor, @NonNull Class<X> clazz) {
+        CursorContentWrapper<List<X>> wrapper = new CursorContentWrapper<>();
+        wrapper.changeCursor(cursor);
+        wrapper.setContent(ADME.cursorToEntityList(cursor, clazz));
+        return wrapper;
+    }
 
     private Cursor mCursor;
 
     /**
-     * {@inheritDoc}
-     * <p/>
-     * <strong>Implementation details:</strong>
-     * <p/>
-     * Change the wrapped Content. This method is meant to be used in initialization only.
+     * Change the wrapped Cursor.
      * <p/>
      * Be aware this does NOT cause a notification to the Observers!
      *
-     * @param content the new content
-     */
-    @Override
-    public void setContent(T content) {
-        super.setContent(content);
-    }
-
-    /**
-     * Change the wrapped Cursor. This method is meant to be used in initialization only.
-     * <p/>
-     * Be aware this does NOT cause a notification to the Observers! Nor it carry the previous
-     * registered observers to the new cursor.
-     *
      * @param cursor the new Cursor
      */
-    public void setCursor(@NonNull Cursor cursor) {
+    public Cursor changeCursor(Cursor cursor) {
+        if (mCursor == cursor) {
+            return null;
+        }
+        Cursor oldCursor = mCursor;
         this.mCursor = cursor;
+        if (oldCursor != null) {
+            oldCursor.unregisterContentObserver(getInternalObserver());
+        }
+        if (cursor != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                Uri notificationUri = cursor.getNotificationUri();
+                if (notificationUri == null) {
+                    Log.w(InternalADMEConsts.LOGTAG, "wrapping Cursor without notification Uri, did you set one in the ContentProvider?");
+                }
+            }
+            cursor.registerContentObserver(getInternalObserver());
+        }
+        return oldCursor;
     }
 
     /**
@@ -62,21 +123,6 @@ public class CursorContentWrapper<T> extends ContentWrapper<T> {
      */
     public Cursor getCursor() {
         return mCursor;
-    }
-
-    @Override
-    public void registerContentObserver(ContentObserver observer) {
-        if (mCursor == null) {
-            throw new IllegalStateException("No cursor has been set");
-        }
-        mCursor.registerContentObserver(observer);
-    }
-
-    @Override
-    public void unregisterContentObserver(ContentObserver observer) {
-        if (mCursor != null) {
-            mCursor.unregisterContentObserver(observer);
-        }
     }
 
     @Override

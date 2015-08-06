@@ -5,7 +5,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.content.AsyncTaskLoader;
 
 /**
- * An abstract {@link ContentWrapper} loader that automatically start loading on initialization.
+ * An abstract {@link BaseContentWrapper} loader that automatically start loading on initialization.
  * <p/>
  * It cache the value returned by {@link #loadContentInBackground()} and automatically refresh reload
  * in background when the data behind the ContentWrapper changes.

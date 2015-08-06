@@ -265,6 +265,97 @@ public class ADME {
     }
 
     /**
+     * Convert a {@link android.database.Cursor} into a list of Entity instance.
+     * <p/>
+     * If the class of the entityRow is not annotated with {@link com.danielesegato.adme.annotation.ADMEEntity}
+     * this method will throw a RuntimeException.
+     * <p/>
+     * Any missing column will be ignored.
+     *
+     * @param cursor The Cursor containing the data, it will not
+     *               be cleared, it's the caller job to do so if you require it.
+     * @param clazz  The class of the instance to be created, it must have a public empty constructor
+     * @param <T>    the type of entity
+     * @return the List of Entity with the data extracted by the cursor
+     */
+    public static
+    @NonNull
+    <T> List<T> cursorToEntityList(@NonNull Cursor cursor, @NonNull Class<T> clazz) {
+        return cursorToEntityList(cursor, clazz, getAllColumnsSet(clazz, true, true));
+    }
+
+    /**
+     * Convert a {@link android.database.Cursor} into an Entity instance.
+     * <p/>
+     * If the class of the entityRow is not annotated with {@link com.danielesegato.adme.annotation.ADMEEntity}
+     * this method will throw a RuntimeException.
+     * <p/>
+     * Any missing column will be ignored.
+     *
+     * @param cursor The Cursor containing the data, it will not
+     *               be cleared, it's the caller job to do so if you require it.
+     * @param clazz  The class of the instance to be created, it must have a public empty constructor
+     * @param list   an instance list for the entities, they will be added to the list
+     * @param <T>    the type of entity
+     * @return the Entity with the data extracted by the cursor
+     */
+    public static
+    @NonNull
+    <T> List<T> cursorToEntityList(@NonNull Cursor cursor, @NonNull Class<T> clazz, @NonNull List<T> list) {
+        return cursorToEntityList(cursor, clazz, list, getAllColumnsSet(clazz, true, true));
+    }
+
+    /**
+     * Convert a {@link android.database.Cursor} into an Entity instance. Only the given set of columns will be read from the cursor.
+     * <p/>
+     * If the class of the entityRow is not annotated with {@link com.danielesegato.adme.annotation.ADMEEntity}
+     * this method will throw a RuntimeException.
+     * <p/>
+     * Any missing column will be ignored.
+     *
+     * @param cursor  The Cursor containing the data, it will not
+     *                be cleared, it's the caller job to do so if you require it.
+     * @param clazz   The class of the instance to be created, it must have a public empty constructor
+     * @param columns The set of columns to extract from the Cursor, any missing column will be ignored.
+     * @param <T>     the type of entity
+     * @return the Entity with the data extracted by the cursor
+     */
+    public static
+    @NonNull
+    <T> List<T> cursorToEntityList(@NonNull Cursor cursor, @NonNull Class<T> clazz, @NonNull Set<String> columns) {
+        List<T> list = new ArrayList<>(cursor.getCount());
+        cursorToEntityList(cursor, clazz, list, columns);
+        return list;
+    }
+
+    /**
+     * Convert a {@link android.database.Cursor} into an Entity instance. Only the given set of columns will be read from the cursor.
+     * <p/>
+     * If the class of the entityRow is not annotated with {@link com.danielesegato.adme.annotation.ADMEEntity}
+     * this method will throw a RuntimeException.
+     * <p/>
+     * Any missing column will be ignored.
+     *
+     * @param cursor  The Cursor containing the data, it will not
+     *                be cleared, it's the caller job to do so if you require it.
+     * @param clazz   The class of the instance to be created, it must have a public empty constructor
+     * @param list    an instance list for the entities, they will be added to the list
+     * @param columns The set of columns to extract from the Cursor, any missing column will be ignored.
+     * @param <T>     the type of entity
+     * @return the Entity with the data extracted by the cursor
+     */
+    public static
+    @NonNull
+    <T> List<T> cursorToEntityList(@NonNull Cursor cursor, @NonNull Class<T> clazz, List<T> list, @NonNull Set<String> columns) {
+        if (cursor.moveToFirst()) {
+            do {
+                list.add(cursorToEntity(cursor, clazz, columns));
+            } while (cursor.moveToNext());
+        }
+        return list;
+    }
+
+    /**
      * Create the table for the entity of the entityClass. The entityClass must be annotated with
      * an {@link com.danielesegato.adme.annotation.ADMEEntity} annotation.
      * <p/>

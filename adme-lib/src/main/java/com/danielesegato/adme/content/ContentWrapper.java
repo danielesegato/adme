@@ -5,7 +5,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 /**
- * An abstract observable container that allow registering for changes and closing freeing resources
+ * An observable container that allow registering for changes and closing freeing resources
  * when not needed anymore.
  * <p/>
  * The content can be of any type.
@@ -16,37 +16,31 @@ import android.support.annotation.Nullable;
  * be able to automatically refresh itself if data changes.
  *
  * @see CursorContentWrapper
- * @see ADMEWrapperUtil
+ * @see CompositeContentWrapper
  * @see ADMEContentLoader
  * @see ADMEContentLoaderCompat
  */
-public abstract class ContentWrapper<T> {
-    protected T mContent;
-
+public interface ContentWrapper<T> {
     /**
      * Set a new content, its up to the implementation to chose whatever this should trig a content
      * change notification to observers or not.
      *
      * @param content the new content
      */
-    public void setContent(@Nullable T content) {
-        mContent = content;
-    }
+    void setContent(@Nullable T content);
 
     /**
      * @return the current content wrapped
      */
     @Nullable
-    public T getContent() {
-        return mContent;
-    }
+    T getContent();
 
     /**
      * Register an observer that is called when changes happen to the content backing this wrapper.
      *
      * @param observer the object that gets notified when the content backing the wrapper changes.
      */
-    public abstract void registerContentObserver(@NonNull ContentObserver observer);
+    void registerContentObserver(@NonNull ContentObserver observer);
 
     /**
      * Unregister an observer that has previously been registered with this wrapper via
@@ -54,10 +48,10 @@ public abstract class ContentWrapper<T> {
      *
      * @param observer the object to unregister.
      */
-    public abstract void unregisterContentObserver(@NonNull ContentObserver observer);
+    void unregisterContentObserver(@NonNull ContentObserver observer);
 
     /**
      * Closes the Wrapper, releasing all of its resources and making it completely invalid.
      */
-    public abstract void close();
+    void close();
 }
