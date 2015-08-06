@@ -3,6 +3,8 @@ package com.danielesegato.adme;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.danielesegato.adme.config.ADMEConfigUtils;
@@ -46,7 +48,9 @@ public class ADME {
      *                           if you need to use back references)
      * @return the ContentValues from the entity row
      */
-    public static <T> ContentValues entityToContentValues(ContentValues values, T entityRow, boolean includeId, boolean includeForeignKeys) {
+    public static
+    @NonNull
+    <T> ContentValues entityToContentValues(@Nullable ContentValues values, @NonNull T entityRow, boolean includeId, boolean includeForeignKeys) {
         Set<String> columns = getAllColumnsSet(entityRow.getClass(), includeId, includeForeignKeys);
         return entityToContentValues(values, entityRow, columns);
     }
@@ -63,7 +67,9 @@ public class ADME {
      *                           if you need to use back references)
      * @return the complete set of columns for this entity
      */
-    public static <T> Set<String> getAllColumnsSet(Class<T> entityClass, boolean includeId, boolean includeForeignKeys) {
+    public static
+    @NonNull
+    <T> Set<String> getAllColumnsSet(@NonNull Class<T> entityClass, boolean includeId, boolean includeForeignKeys) {
         final ADMEEntityConfig<T> entityConfig = ADMEConfigUtils.lookupADMEEntityConfig(entityClass);
         Set<String> columns = new HashSet<String>();
         for (ADMEFieldConfig field : entityConfig.getFieldsConfig()) {
@@ -93,7 +99,9 @@ public class ADME {
      * @param columns   The set of columns to include in the content values.
      * @return the ContentValues from the entity row
      */
-    public static <T> ContentValues entityToContentValues(ContentValues values, T entityRow, Set<String> columns) {
+    public static
+    @NonNull
+    <T> ContentValues entityToContentValues(@Nullable ContentValues values, @NonNull T entityRow, @NonNull Set<String> columns) {
         final ADMEEntityConfig<T> entityConfig = ADMEConfigUtils.lookupADMEEntityConfig((Class<T>) entityRow.getClass());
         if (values == null) {
             values = new ContentValues();
@@ -133,13 +141,15 @@ public class ADME {
      * <p/>
      * Any missing column will be ignored.
      *
-     * @param cursor  The Cursor containing the data, it will not
-     *                be cleared, it's the caller job to do so if you require it.
-     * @param clazz   The class of the instance to be created, it must have a public empty constructor
-     * @param <T>     the type of entity
+     * @param cursor The Cursor containing the data, it will not
+     *               be cleared, it's the caller job to do so if you require it.
+     * @param clazz  The class of the instance to be created, it must have a public empty constructor
+     * @param <T>    the type of entity
      * @return the Entity with the data extracted by the cursor
      */
-    private static <T> T cursorToEntity(Cursor cursor, Class<T> clazz) {
+    public static
+    @NonNull
+    <T> T cursorToEntity(@NonNull Cursor cursor, @NonNull Class<T> clazz) {
         return cursorToEntity(cursor, clazz, getAllColumnsSet(clazz, true, true));
     }
 
@@ -151,13 +161,15 @@ public class ADME {
      * <p/>
      * Any missing column will be ignored.
      *
-     * @param cursor  The Cursor containing the data, it will not
-     *                be cleared, it's the caller job to do so if you require it.
-     * @param entity  an instance of the entity, fields will be overridden)
-     * @param <T>     the type of entity
+     * @param cursor The Cursor containing the data, it will not
+     *               be cleared, it's the caller job to do so if you require it.
+     * @param entity an instance of the entity, fields will be overridden)
+     * @param <T>    the type of entity
      * @return the Entity with the data extracted by the cursor
      */
-    public static <T> T cursorToEntity(Cursor cursor, T entity) {
+    public static
+    @NonNull
+    <T> T cursorToEntity(@NonNull Cursor cursor, @NonNull T entity) {
         return cursorToEntity(cursor, entity, getAllColumnsSet(entity.getClass(), true, true));
     }
 
@@ -176,7 +188,9 @@ public class ADME {
      * @param <T>     the type of entity
      * @return the Entity with the data extracted by the cursor
      */
-    private static <T> T cursorToEntity(Cursor cursor, Class<T> clazz, Set<String> columns) {
+    public static
+    @NonNull
+    <T> T cursorToEntity(@NonNull Cursor cursor, @NonNull Class<T> clazz, @NonNull Set<String> columns) {
         try {
             T entity = clazz.newInstance();
             return cursorToEntity(cursor, entity, columns);
@@ -202,8 +216,10 @@ public class ADME {
      * @param <T>     the type of entity
      * @return the Entity with the data extracted by the cursor
      */
-    public static <T> T cursorToEntity(Cursor cursor, T entity, Set<String> columns) {
-        final ADMEEntityConfig<T> entityConfig = ADMEConfigUtils.lookupADMEEntityConfig((Class<T>)entity.getClass());
+    public static
+    @NonNull
+    <T> T cursorToEntity(@NonNull Cursor cursor, @NonNull T entity, @NonNull Set<String> columns) {
+        final ADMEEntityConfig<T> entityConfig = ADMEConfigUtils.lookupADMEEntityConfig((Class<T>) entity.getClass());
         try {
             for (final ADMEFieldConfig fieldConfig : entityConfig.getFieldsConfig()) {
                 if (!columns.contains(fieldConfig.getColumnName())) {
@@ -265,7 +281,7 @@ public class ADME {
      * @param entityClass the {@link com.danielesegato.adme.annotation.ADMEEntity} annotated class.
      * @param <T>         the type of the class
      */
-    public static <T> void createTable(final SQLiteDatabase db, final Class<T> entityClass) {
+    public static <T> void createTable(@NonNull final SQLiteDatabase db, @NonNull final Class<T> entityClass) {
         ADMEEntityConfig<T> entityConfig = ADMEConfigUtils.lookupADMEEntityConfig(entityClass);
         List<String> statements = getCreateTableStatements(entityConfig);
         for (String statement : statements) {
@@ -282,7 +298,7 @@ public class ADME {
      * @param dbEntityConfig the {@link com.danielesegato.adme.annotation.ADMEEntity} annotated class.
      * @return the list of SQLite statements to create this table and its indexes in the database.
      */
-    public static List<String> getCreateTableStatements(final ADMEEntityConfig<?> dbEntityConfig) {
+    public static List<String> getCreateTableStatements(@NonNull final ADMEEntityConfig<?> dbEntityConfig) {
         // http://www.sqlite.org/lang_createtable.html
         final List<String> statements = new ArrayList<String>();
         final StringBuilder sb = new StringBuilder();
@@ -302,12 +318,12 @@ public class ADME {
         return statements;
     }
 
-    public static <T> void dropTable(final SQLiteDatabase db, final Class<T> entityClass) {
+    public static <T> void dropTable(@NonNull final SQLiteDatabase db, @NonNull final Class<T> entityClass) {
         ADMEEntityConfig<T> entityConfig = ADMEConfigUtils.lookupADMEEntityConfig(entityClass);
         dropTable(db, entityConfig.getEntityName());
     }
 
-    public static void dropTable(final SQLiteDatabase db, final String tableName) {
+    public static void dropTable(@NonNull final SQLiteDatabase db, @NonNull final String tableName) {
         List<String> statements = getDropTableStatements(db, tableName);
         for (String statement : statements) {
             Log.d(LOGTAG, String.format("Dropping table for %s, executing statement: %s", tableName, statement));
@@ -316,11 +332,15 @@ public class ADME {
         Log.i(LOGTAG, String.format("Table for %s dropped SUCCESSFULLY", tableName));
     }
 
-    public static List<String> getDropTableStatements(final SQLiteDatabase db, final String tableName) {
+    public static
+    @NonNull
+    List<String> getDropTableStatements(@NonNull final SQLiteDatabase db, @NonNull final String tableName) {
         return getDropTableStatements(tableName, getTableIndexNameSet(db, tableName));
     }
 
-    private static <T> List<String> getDropTableStatements(final String tableName, final Set<String> indexNameSet) {
+    private static
+    @NonNull
+    List<String> getDropTableStatements(@NonNull final String tableName, @NonNull final Set<String> indexNameSet) {
         // http://www.sqlite.org/lang_droptable.html
         final List<String> statements = new ArrayList<String>();
         final StringBuilder sb = new StringBuilder();
@@ -343,7 +363,9 @@ public class ADME {
      * @param tableName the table name
      * @return the set of index name
      */
-    public static Set<String> getTableIndexNameSet(final SQLiteDatabase db, final String tableName) {
+    public static
+    @NonNull
+    Set<String> getTableIndexNameSet(@NonNull final SQLiteDatabase db, @NonNull final String tableName) {
         Set<String> indexNameSet = new HashSet<String>();
         Cursor c = db.rawQuery("SELECT name FROM sqlite_master WHERE type == ? AND tbl_name == ?", new String[]{"index", tableName});
         while (c.moveToNext()) {
@@ -356,7 +378,9 @@ public class ADME {
         return indexNameSet;
     }
 
-    private static StringBuilder appendColumnsDefinitions(final StringBuilder sb, final ADMEEntityConfig<?> dbEntityConfig) {
+    private static
+    @NonNull
+    StringBuilder appendColumnsDefinitions(@NonNull final StringBuilder sb, @NonNull final ADMEEntityConfig<?> dbEntityConfig) {
         boolean first = true;
         for (ADMEFieldConfig fieldConfig : dbEntityConfig.getFieldsConfig()) {
             if (first) {
@@ -369,7 +393,7 @@ public class ADME {
         return sb;
     }
 
-    private static void appendColumnDefinition(final StringBuilder sb, final ADMEFieldConfig fieldConfig) {
+    private static void appendColumnDefinition(@NonNull final StringBuilder sb, @NonNull final ADMEFieldConfig fieldConfig) {
         SQLStringHelper.appendEscapedEntityOrField(sb, fieldConfig.getColumnName()).append(' ');
 
         ADMESerializer admeSerializer = fieldConfig.getADMESerializer();
@@ -418,7 +442,9 @@ public class ADME {
         }
     }
 
-    private static StringBuilder appendEntityConstraints(final StringBuilder sb, final ADMEEntityConfig<?> dbEntityConfig) {
+    private static
+    @NonNull
+    StringBuilder appendEntityConstraints(@NonNull final StringBuilder sb, @NonNull final ADMEEntityConfig<?> dbEntityConfig) {
         for (final ADMEIndexConstraintConfig indexConstraintConfig : dbEntityConfig.getIndexConstraintConfigList()) {
             if (!indexConstraintConfig.isSingleField()) {
                 sb.append(", UNIQUE (");
@@ -452,7 +478,9 @@ public class ADME {
         return sb;
     }
 
-    private static StringBuilder appendIndexStatement(final StringBuilder sb, final ADMEIndexConstraintConfig indexConstraintConfig) {
+    private static
+    @NonNull
+    StringBuilder appendIndexStatement(@NonNull final StringBuilder sb, @NonNull final ADMEIndexConstraintConfig indexConstraintConfig) {
         // http://www.sqlite.org/lang_createindex.html
         sb.append("CREATE ");
         if (indexConstraintConfig.isUnique()) {
@@ -487,7 +515,7 @@ public class ADME {
      * @param clazz      the custom class type
      * @param serializer the custom serializer
      */
-    public static void registerADMESerializer(final Class<?> clazz, final ADMESerializer serializer) {
+    public static void registerADMESerializer(@NonNull final Class<?> clazz, @NonNull final ADMESerializer serializer) {
         ADMESerializerMapping.registerSerializer(clazz, serializer);
     }
 
@@ -497,7 +525,7 @@ public class ADME {
      *
      * @param clazz the custom class type
      */
-    public static void unregisterADMESerializer(final Class<?> clazz) {
+    public static void unregisterADMESerializer(@NonNull final Class<?> clazz) {
         ADMESerializerMapping.unregisterSerializer(clazz);
     }
 }
