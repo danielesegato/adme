@@ -51,7 +51,7 @@ public abstract class ADMEContentLoader<D> extends AsyncTaskLoader<ContentWrappe
         if (isStarted()) {
             super.deliverResult(data);
         }
-        if (oldContent != null) {
+        if (oldContent != null && data != oldContent) {
             oldContent.unregisterContentObserver(observer);
             oldContent.close();
         }
