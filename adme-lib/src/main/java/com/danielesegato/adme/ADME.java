@@ -537,7 +537,7 @@ public class ADME {
     @NonNull
     StringBuilder appendEntityConstraints(@NonNull final StringBuilder sb, @NonNull final ADMEEntityConfig<?> dbEntityConfig) {
         for (final ADMEIndexConstraintConfig indexConstraintConfig : dbEntityConfig.getIndexConstraintConfigList()) {
-            if (!indexConstraintConfig.isSingleField()) {
+            if (!indexConstraintConfig.isSingleField() && indexConstraintConfig.isUnique()) {
                 sb.append(", UNIQUE (");
                 boolean first = true;
                 for (ADMEFieldConfig fieldConfig : indexConstraintConfig.getFields()) {
