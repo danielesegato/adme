@@ -3,6 +3,9 @@ package com.danielesegato.adme.content;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v4.content.AsyncTaskLoader;
+import android.util.Log;
+
+import com.danielesegato.adme.InternalADMEConsts;
 
 /**
  * An abstract {@link BaseContentWrapper} loader that automatically start loading on initialization.
@@ -16,6 +19,7 @@ public abstract class ADMEContentLoaderCompat<D> extends AsyncTaskLoader<Content
 
     private final ForceLoadContentObserver observer;
     protected ContentWrapper<D> mContent;
+    private ContentWrapper<D> mContentObserved;
 
     public ADMEContentLoaderCompat(Context context) {
         super(context);
@@ -37,33 +41,40 @@ public abstract class ADMEContentLoaderCompat<D> extends AsyncTaskLoader<Content
     public void deliverResult(ContentWrapper<D> data) {
         if (isReset()) {
             if (data != null) {
+                unobserve(data);
                 data.close();
             }
             return;
         }
 
         ContentWrapper<D> oldContent = mContent;
-        mContent = data;
 
+        boolean dataChanged = data != oldContent;
+        boolean needCloseOld = oldContent != null && dataChanged;
+        if (needCloseOld) {
+            unobserve(oldContent);
+        }
+
+        observe(data);
+        mContent = data;
         if (isStarted()) {
             super.deliverResult(data);
         }
-        if (oldContent != null && data != oldContent) {
-            oldContent.unregisterContentObserver(observer);
+        if (needCloseOld) {
             oldContent.close();
         }
     }
 
     @Override
     public void onContentChanged() {
+        // avoid recursive calls
+        unobserve(mContentObserved);
         super.onContentChanged();
     }
 
     @Override
     public final ContentWrapper<D> loadInBackground() {
-        ContentWrapper<D> content = loadContentInBackground();
-        content.registerContentObserver(observer);
-        return content;
+        return loadContentInBackground();
     }
 
     public abstract
@@ -73,7 +84,6 @@ public abstract class ADMEContentLoaderCompat<D> extends AsyncTaskLoader<Content
     @Override
     public void onCanceled(ContentWrapper<D> data) {
         if (data != null) {
-            data.unregisterContentObserver(observer);
             data.close();
         }
     }
@@ -82,8 +92,40 @@ public abstract class ADMEContentLoaderCompat<D> extends AsyncTaskLoader<Content
     protected void onReset() {
         onStopLoading();
         if (mContent != null) {
+            unobserve(mContent);
             mContent.close();
         }
         mContent = null;
+    }
+
+    private synchronized void unobserve(ContentWrapper<D> content) {
+        if (content != mContentObserved || content == null) {
+            return;
+        }
+        try {
+            content.unregisterContentObserver(observer);
+        } catch (IllegalStateException e) {
+            Log.w(InternalADMEConsts.LOGTAG, String.format("unregisterContentObserver(): %s [%s] - NOT NEEDED, wasn't registered", content), e);
+        }
+        mContentObserved = null;
+    }
+
+    private synchronized void observe(ContentWrapper<D> content) {
+        if (content == mContentObserved) {
+            return;
+        }
+        if (mContentObserved != null) {
+            Log.w(InternalADMEConsts.LOGTAG, String.format("registering observer when another content is already observed: %s -> %s [%s]", mContentObserved, content));
+            unobserve(mContentObserved);
+        }
+        if (content == null) {
+            return;
+        }
+        try {
+            content.registerContentObserver(observer);
+            mContentObserved = content;
+        } catch (IllegalStateException e) {
+            Log.w(InternalADMEConsts.LOGTAG, String.format("registerContentObserver(): %s [%s] - NOT NEEDED, already registered", content), e);
+        }
     }
 }
