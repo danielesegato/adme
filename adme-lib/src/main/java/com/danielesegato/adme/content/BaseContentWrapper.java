@@ -17,6 +17,7 @@ public abstract class BaseContentWrapper<T> implements ContentWrapper<T> {
     protected final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
     private final ContentObserver INTERNAL_OBSERVER = new InternalContentObserver();
     private final ContentObservable mContentObservable = new ContentObservable();
+    private int mObservedCount;
     protected T mContent;
     {
         mContentObservable.registerObserver(INTERNAL_OBSERVER);
@@ -46,17 +47,32 @@ public abstract class BaseContentWrapper<T> implements ContentWrapper<T> {
 
     @Override
     public final void registerContentObserver(@NonNull ContentObserver observer) {
-        mContentObservable.registerObserver(observer);
+        synchronized (mContentObservable) {
+            if (mObservedCount == 0) {
+                mContentObservable.registerObserver(INTERNAL_OBSERVER);
+            }
+            mContentObservable.registerObserver(observer);
+            mObservedCount++;
+        }
     }
 
     @Override
     public final void unregisterContentObserver(@NonNull ContentObserver observer) {
-        mContentObservable.unregisterObserver(observer);
+        synchronized (mContentObservable) {
+            mContentObservable.unregisterObserver(observer);
+            mObservedCount--;
+            if (mObservedCount == 0) {
+                mContentObservable.unregisterObserver(INTERNAL_OBSERVER);
+            }
+        }
     }
 
     @Override
     public void close() {
-        mContentObservable.unregisterAll();
+        synchronized (mContentObservable) {
+            mContentObservable.unregisterAll();
+            mObservedCount = 0;
+        }
     }
 
     protected final ContentObserver getInternalObserver() {
