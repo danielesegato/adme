@@ -111,7 +111,7 @@ public abstract class ADMEContentLoader<D> extends AsyncTaskLoader<ContentWrappe
         try {
             content.unregisterContentObserver(observer);
         } catch (IllegalStateException e) {
-            Log.w(InternalADMEConsts.LOGTAG, String.format("unregisterContentObserver(): %s [%s] - NOT NEEDED, wasn't registered", content), e);
+            Log.w(InternalADMEConsts.LOGTAG, String.format("unregisterContentObserver(): %s - NOT NEEDED, wasn't registered", content), e);
         }
         mContentObserved = null;
     }
@@ -121,7 +121,7 @@ public abstract class ADMEContentLoader<D> extends AsyncTaskLoader<ContentWrappe
             return;
         }
         if (mContentObserved != null) {
-            Log.w(InternalADMEConsts.LOGTAG, String.format("registering observer when another content is already observed: %s -> %s [%s]", mContentObserved, content));
+            Log.w(InternalADMEConsts.LOGTAG, String.format("registering observer when another content is already observed: %s -> %s", mContentObserved, content));
             unobserve(mContentObserved);
         }
         if (content == null) {
@@ -131,7 +131,7 @@ public abstract class ADMEContentLoader<D> extends AsyncTaskLoader<ContentWrappe
             content.registerContentObserver(observer);
             mContentObserved = content;
         } catch (IllegalStateException e) {
-            Log.w(InternalADMEConsts.LOGTAG, String.format("registerContentObserver(): %s [%s] - NOT NEEDED, already registered", content), e);
+            Log.w(InternalADMEConsts.LOGTAG, String.format("registerContentObserver(): %s - NOT NEEDED, already registered", content), e);
         }
     }
 }
