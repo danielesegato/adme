@@ -19,9 +19,6 @@ public abstract class BaseContentWrapper<T> implements ContentWrapper<T> {
     private final ContentObservable mContentObservable = new ContentObservable();
     private int mObservedCount;
     protected T mContent;
-    {
-        mContentObservable.registerObserver(INTERNAL_OBSERVER);
-    }
 
     /**
      * {@inheritDoc}
