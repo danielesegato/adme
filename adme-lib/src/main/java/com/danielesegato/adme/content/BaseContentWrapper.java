@@ -45,6 +45,9 @@ public abstract class BaseContentWrapper<T> implements ContentWrapper<T> {
     @Override
     public final void registerContentObserver(@NonNull ContentObserver observer) {
         synchronized (mContentObservable) {
+            if (observer == INTERNAL_OBSERVER) {
+                throw new IllegalArgumentException("Manual internal observer registration is forbidden");
+            }
             if (mObservedCount == 0) {
                 mContentObservable.registerObserver(INTERNAL_OBSERVER);
             }
@@ -56,6 +59,9 @@ public abstract class BaseContentWrapper<T> implements ContentWrapper<T> {
     @Override
     public final void unregisterContentObserver(@NonNull ContentObserver observer) {
         synchronized (mContentObservable) {
+            if (observer == INTERNAL_OBSERVER) {
+                throw new IllegalArgumentException("Manual internal observer un-registration is forbidden");
+            }
             mContentObservable.unregisterObserver(observer);
             mObservedCount--;
             if (mObservedCount == 0) {
