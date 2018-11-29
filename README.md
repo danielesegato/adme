@@ -1,6 +1,9 @@
 ADME library - Android Database Made Easy
 =======
 
+**DEPRECATION**: this repository has not been worked on for a long time and it has been made obsolte by many other libraries that got released in the mean time. I've switched to [Android Room Library by Google](https://developer.android.com/topic/libraries/architecture/room).
+
+
 This library is a work in progress but I already use it in some project.
 If you stumble on it feel free to try it out but be aware the API may change before the first stable release.
 
